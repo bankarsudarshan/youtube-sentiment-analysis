@@ -17,15 +17,9 @@ stages:
     deps:
     - src/model_building.py
     - data/processed/train_processed.csv
-    outs:
-    - models/tfidf_vectorizer.pkl
-    - models/lgbm_model.pkl
   model_evaluation:
     cmd: python src/model_evaluation.py
     deps:
     - src/model_evaluation.py
     - models/
     - data/processed/test_processed.csv
-    outs:
-    - reports/confusion_matrix.png
-    - reports/metrics.json
