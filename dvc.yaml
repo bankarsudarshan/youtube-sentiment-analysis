@@ -2,24 +2,32 @@ stages:
   data_ingestion:
     cmd: python src/data_ingestion.py
     deps:
-    - src/data_ingestion.py
+      - src/data_ingestion.py
     outs:
-    - data/raw
+      - data/raw
   data_preprocessing:
     cmd: python src/data_preprocessing.py
     deps:
-    - src/data_preprocessing.py
-    - data/raw/
+      - src/data_preprocessing.py
+      - data/raw/
     outs:
-    - data/processed
+      - data/processed/train_processed.csv
+      - data/processed/test_processed.csv
   model_building:
     cmd: python src/model_building.py
     deps:
-    - src/model_building.py
-    - data/processed/train_processed.csv
+      - src/model_building.py
+      - data/processed/train_processed.csv
+    outs:
+      - models/tfidf_vectorizer.pkl
+      - models/lgbm_model.pkl
   model_evaluation:
     cmd: python src/model_evaluation.py
     deps:
-    - src/model_evaluation.py
-    - models/
-    - data/processed/test_processed.csv
+      - src/model_evaluation.py
+      - models/lgbm_model.pkl
+      - models/tfidf_vectorizer.pkl
+      - data/processed/test_processed.csv
+    outs:
+      - reports/confusion_matrix.png
+      - reports/metrics.json
