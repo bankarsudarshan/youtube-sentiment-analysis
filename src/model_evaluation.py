@@ -6,7 +6,6 @@ import pickle
 import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
-from mlflow.models import infer_signature
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -57,37 +56,11 @@ def load_model(model_path: str):
         logger.error(f'Error loading model from {model_path}: {e}')
         raise
 
-def evaluate_model(model, X_test: np.ndarray, y_test: np.ndarray):
-    """Evaluate the model and log classification metrics and confusion matrix."""
-    try:
-        # Predict and calculate classification metrics
-        y_pred = model.predict(X_test)
-        report = classification_report(y_test, y_pred, output_dict=True)
-        logger.debug('Model evaluation metrics calculated')
-        return report
-    except Exception as e:
-        logger.error('Error during model evaluation: %s', e)
-        raise
-
-def save_metrics(metrics: dict, file_path: str) -> None:
-    """Save the evaluation metrics to a JSON file."""
-    try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        with open(file_path, 'w') as file:
-            json.dump(metrics, file, indent=4)
-        logger.debug('Metrics saved to %s', file_path)
-    except Exception as e:
-        logger.error('Error occurred while saving the metrics: %s', e)
-        raise
-
 def main():
     try:
-        lgbm = load_model('./models/lgbm_model.pkl')
+        model = load_model('./models/lgbm_model.pkl')
         vectorizer = load_model('./models/tfidf_vectorizer.pkl')
         
-        # Load test data for signature inference
         test_data = load_data('data/processed/test_processed.csv')
 
         # Prepare test data
@@ -95,11 +68,41 @@ def main():
         X_test = pd.DataFrame(X_test_tfidf.toarray())
         y_test = test_data['category'].values
 
-        report = evaluate_model(lgbm, X_test, y_test)
-        save_metrics(report, 'reports/metrics.json')
+        with mlflow.start_run(run_name="model_evaluation"):
+            y_pred = model.predict(X_test)
+
+            # metrics
+            report = classification_report(y_test, y_pred, output_dict=True)
+            for label, metrics in report.items():
+                if isinstance(metrics, dict):
+                    for metric, value in metrics.items():
+                        mlflow.log_metric(f"{label}_{metric}", value)
+            
+            # confusion matrix
+            cm = confusion_matrix(y_test, y_pred)
+            plt.figure(figsize=(7, 6))
+            sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+            plt.xlabel("Predicted")
+            plt.ylabel("Actual")
+            plt.title("Confusion Matrix")
+            cm_path = "reports/confusion_matrix.png"
+            os.makedirs("reports", exist_ok=True)
+            plt.savefig(cm_path)
+            mlflow.log_artifact(cm_path)
+
+            # Save metrics.json
+            metrics_path = "reports/metrics.json"
+            with open(metrics_path, "w") as f:
+                json.dump(report, f, indent=4)
+            mlflow.log_artifact(metrics_path)
+
+            # Log the model (again for evaluation)
+            mlflow.sklearn.log_model(model, artifact_path="evaluated_model")
+
+            logger.info("Evaluation logged successfully")
     except Exception as e:
-        logger.error('Failed to complete the model evaluation process: %s', e)
-        print(f"Error: {e}")
+        logger.error(f'Failed to complete the model evaluation process: {e}')
+        raise
 
 
 if __name__ == '__main__':

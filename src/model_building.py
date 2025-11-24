@@ -1,8 +1,11 @@
 import logging
 import os
 import pickle
+import time
 
 import lightgbm as lgb
+import mlflow
+import mlflow.lightgbm
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -30,19 +33,16 @@ logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 
 
-def load_data(file_path: str) -> pd.DataFrame:
-    """Load data from a CSV file."""
-    try:
-        df = pd.read_csv(file_path)
-        df.fillna('', inplace=True)  # Fill any NaN values
-        logger.debug('Data loaded and NaNs filled from %s', file_path)
-        return df
-    except pd.errors.ParserError as e:
-        logger.error('Failed to parse the CSV file: %s', e)
-        raise
-    except Exception as e:
-        logger.error('Unexpected error occurred while loading the data: %s', e)
-        raise
+def load_data(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    df.fillna("", inplace=True)
+    logger.debug(f"Training data loaded with shape {df.shape}")
+    return df
+
+def save_data(df, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    df.to_csv(path, index=False)
+    logger.debug(f"Saved featurized data to {path}")
 
 def train_lgbm(X_train: np.ndarray, y_train: np.ndarray, learning_rate: float, max_depth: int, n_estimators: int) -> lgb.LGBMClassifier:
     """Train a LightGBM model."""
@@ -66,36 +66,59 @@ def train_lgbm(X_train: np.ndarray, y_train: np.ndarray, learning_rate: float, m
         logger.error('Error during LightGBM model training: %s', e)
         raise
 
-def save_model(model, file_path: str) -> None:
-    """Save the trained model to a file"""
-    try:
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'wb') as file:
-            pickle.dump(model, file)
-        logger.debug('Model saved to %s', file_path)
-    except FileNotFoundError as e:
-        logger.error('File path not found: %s', e)
-        raise
-    except Exception as e:
-        logger.error('Error occurred while saving the model: %s', e)
-        raise
+def save_model(obj, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        pickle.dump(obj, f)
+    logger.debug(f"Model saved at {path}")
 
 def main():
     try:
-        # params
-        learning_rate, max_depth, n_estimators = 0.09, 20, 367
+        # TF-IDF params
+        max_features = 1000
+        ngram_range = (1, 2)
 
-        # load the feature engineered training data 
-        train_tfidf = load_data('./data/feature-engineered/train_tfidf.csv')
-        X_train = train_tfidf.iloc[:, :-1].values
-        y_train = train_tfidf.iloc[:, -1].values
+        # lightgbm parameters
+        lr, max_depth, n_estimators = 0.09, 20, 367
 
-        # train the LightGBM model
-        lgbm = train_lgbm(X_train, y_train, learning_rate, max_depth, n_estimators)
+        # Load the preprocessed training data
+        train_data = load_data('./data/processed/train_processed.csv')
 
-        # save the trained model in the root directory
-        model_save_path = 'models/lgbm_model.pkl'
-        save_model(lgbm, model_save_path)
+        with mlflow.start_run(run_name='model_training'):
+            # Log TF-IDF params
+            mlflow.log_param("tfidf_max_features", max_features)
+            mlflow.log_param("tfidf_ngram_range", ngram_range)
+
+            # Build and fit TF-IDF
+            vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=ngram_range)
+            X_train_tfidf = vectorizer.fit_transform(train_data["clean_comment"])
+            y_train = train_data["category"].values
+
+            # Log vectorizer artifact
+            vectorizer_path = "models/tfidf_vectorizer.pkl"
+            save_model(vectorizer, vectorizer_path)
+            mlflow.log_artifact(vectorizer_path)
+
+            # Log model hyperparameters
+            mlflow.log_param("learning_rate", lr)
+            mlflow.log_param("max_depth", max_depth)
+            mlflow.log_param("n_estimators", n_estimators)
+            
+            # Train model
+            start = time.time()
+            model = train_lgbm(X_train_tfidf, y_train, lr, max_depth, n_estimators)
+            end = time.time()
+            mlflow.log_metric("training_time_sec", end - start)
+
+            # Save LightGBM model locally
+            model_path = "models/lgbm_model.pkl"
+            save_model(model, model_path)
+            mlflow.log_artifact(model_path)
+
+            # Log model to MLflow in a deployable format
+            mlflow.lightgbm.log_model(model, artifact_path="lgbm_model")
+
+            logger.info("Model training completed and logged to MLflow")
 
     except Exception as e:
         logger.error('Failed to complete the feature engineering and model building process: %s', e)
