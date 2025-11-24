@@ -5,8 +5,8 @@ stages:
     deps:
     - path: src/data_ingestion.py
       hash: md5
-      md5: 71d0f636d76f616546f0e4426b1537e1
-      size: 3096
+      md5: c1b408c14eb8fe2b9fbf2053e071d503
+      size: 3193
     outs:
     - path: data/raw
       hash: md5
@@ -62,17 +62,17 @@ stages:
       size: 4104889
     - path: src/model_building.py
       hash: md5
-      md5: 642c21e76fe628218dbd30c7349b2bb6
-      size: 4203
+      md5: 98dfae3a272ad77a49c4b96fc6c4c197
+      size: 4706
     outs:
     - path: models/lgbm_model.pkl
       hash: md5
-      md5: d802331406613ef580d9a4369a99f643
-      size: 3905166
+      md5: 4716fa0e40142e888aee176b406c4540
+      size: 3904349
     - path: models/tfidf_vectorizer.pkl
       hash: md5
-      md5: 577a1e4e948129cdfdfacf1196962b06
-      size: 36630
+      md5: d444a36b6bfea21afe3071c8ad5b34f0
+      size: 36871
   model_evaluation:
     cmd: python src/model_evaluation.py
     deps:
@@ -82,8 +82,8 @@ stages:
       size: 993166
     - path: models/
       hash: md5
-      md5: 5d29d122dab141665e1da82d4da6d7f0.dir
-      size: 3941796
+      md5: 5602dd60c2ed357eab1927f0d190e89f.dir
+      size: 3941220
       nfiles: 2
     - path: src/model_evaluation.py
       hash: md5
@@ -92,9 +92,9 @@ stages:
     outs:
     - path: reports/confusion_matrix.png
       hash: md5
-      md5: c578da60a56ed84ed903c5a3c283093c
-      size: 21154
+      md5: 44e06bc09d118a364ea2cf45c1ac3dad
+      size: 21331
     - path: reports/metrics.json
       hash: md5
-      md5: f8dd6de1214b440c885d215e5d6451e1
-      size: 869
+      md5: b88efac7c51f7a69c3d48a5a8a08aac9
+      size: 870

@@ -9,7 +9,7 @@ import mlflow.lightgbm
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+import yaml
 
 # logging configuration
 log_dir = 'logs'
@@ -44,6 +44,13 @@ def save_data(df, path):
     df.to_csv(path, index=False)
     logger.debug(f"Saved featurized data to {path}")
 
+def load_params(params_path: str) -> dict:
+    """Load parameters from a YAML file."""
+    with open(params_path, 'r') as file:
+        params = yaml.safe_load(file)
+    logger.debug('Parameters retrieved from %s', params_path)
+    return params
+
 def train_lgbm(X_train: np.ndarray, y_train: np.ndarray, learning_rate: float, max_depth: int, n_estimators: int) -> lgb.LGBMClassifier:
     """Train a LightGBM model."""
     try:
@@ -74,12 +81,15 @@ def save_model(obj, path):
 
 def main():
     try:
+        params = load_params('params.yaml')
         # TF-IDF params
-        max_features = 1000
-        ngram_range = (1, 2)
+        max_features = params['model_building']['max_features']
+        ngram_range = tuple(params['model_building']['ngram_range'])
 
         # lightgbm parameters
-        lr, max_depth, n_estimators = 0.09, 20, 367
+        lr = params['model_building']['learning_rate']
+        max_depth = params['model_building']['max_depth']
+        n_estimators = params['model_building']['n_estimators']
 
         # Load the preprocessed training data
         train_data = load_data('./data/processed/train_processed.csv')
