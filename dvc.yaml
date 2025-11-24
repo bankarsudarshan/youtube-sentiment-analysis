@@ -3,6 +3,8 @@ stages:
     cmd: python src/data_ingestion.py
     deps:
       - src/data_ingestion.py
+    params:
+      - data_ingestion.test_size
     outs:
       - data/raw
   data_preprocessing:
@@ -18,6 +20,12 @@ stages:
     deps:
       - src/model_building.py
       - data/processed/train_processed.csv
+    params:
+      - model_building.ngram_range
+      - model_building.max_features
+      - model_building.learning_rate
+      - model_building.max_depth
+      - model_building.n_estimators
     outs:
       - models/tfidf_vectorizer.pkl
       - models/lgbm_model.pkl
