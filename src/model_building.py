@@ -9,13 +9,17 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 # logging configuration
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+
 logger = logging.getLogger('model_building')
 logger.setLevel('DEBUG')
 
 console_handler = logging.StreamHandler()
 console_handler.setLevel('DEBUG')
 
-file_handler = logging.FileHandler('model_building.log')
+log_file_path = os.path.join(log_dir, 'model_building.log')
+file_handler = logging.FileHandler(log_file_path)
 file_handler.setLevel('DEBUG')
 
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
