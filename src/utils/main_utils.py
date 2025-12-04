@@ -119,3 +119,7 @@ def save_dict_as_json(dictionary: dict, file_path: str):
         logging.info(f'Dictionary saved at {file_path}')
     except Exception as e:
         raise Exception(f"Error saving dictionary to JSON: {e}")
+    
+def load_json(path: str):
+    with open(path, "r") as f:
+        return json.load(f)
