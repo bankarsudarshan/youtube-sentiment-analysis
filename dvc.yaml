@@ -1,8 +1,8 @@
 stages:
   data_ingestion:
-    cmd: python src/data_ingestion.py
+    cmd: python src.components.data_ingestion
     deps:
-      - src/data_ingestion.py
+      - src/components/data_ingestion.py
     params:
       - data_ingestion.test_size
     outs:
@@ -11,15 +11,29 @@ stages:
       - artifacts/data_ingestion/ingested/test.csv
 
   data_preprocessing:
-    cmd: python src/data_preprocessing.py
+    cmd: python src.components.data_preprocessing
     deps:
-      - src/data_preprocessing.py
+      - src/components/data_ingestion.py
+      - src/components/data_preprocessing.py
       - artifacts/data_ingestion/ingested/train.csv
       - artifacts/data_ingestion/ingested/test.csv
     outs:
-      - artifacts/artifacts/data_preprocessing//train_processed.csv
-      - artifacts/artifacts/data_preprocessing//test_processed.csv
-      
+      - artifacts/data_preprocessing/train_processed.csv
+      - artifacts/data_preprocessing/test_processed.csv
+
+  data_transformation:
+    cmd: python src.components.data_transformation
+    deps:
+      - src/components/data_ingestion.py
+      - src/components/data_preprocessing.py
+      - artifacts/data_preprocessing/train_processed.csv
+      - artifacts/data_preprocessing/test_processed.csv
+    params:
+      - data_transformation.ngram_range
+      - data_transformation.max_features
+    outs:
+      - artifacts/data_transformation/tfidf_vectorizer.pkl
+
   model_building:
     cmd: python src/model_building.py
     deps:

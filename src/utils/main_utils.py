@@ -1,5 +1,4 @@
 import os
-import sys
 
 import numpy as np
 import dill
@@ -43,6 +42,7 @@ def load_object(file_path: str) -> object:
     except Exception as e:
         raise e
 
+
 def save_numpy_array_data(file_path: str, array: np.array):
     """
     Save numpy array data to file
@@ -72,17 +72,20 @@ def load_numpy_array_data(file_path: str) -> np.array:
 
 
 def save_object(file_path: str, obj: object) -> None:
-    logging.info("Entered the save_object method of utils")
-
+    """
+    saves an object in serialized form in a file
+    args:
+        file_path: example, `artifacts/data_transformation/model.pkl
+        obj: the object that you want to save as a pickle file
+    """
     try:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as file_obj:
             dill.dump(obj, file_obj)
-
-        logging.info("Exited the save_object method of utils")
-
+        logging.debug(f'Object/model {obj} saved to path {file_path}')
     except Exception as e:
         raise e
+
 
 def load_data(path: str) -> pd.DataFrame:
     """Load data from a CSV file."""
@@ -90,6 +93,7 @@ def load_data(path: str) -> pd.DataFrame:
     df.fillna("", inplace=True)
     logging.debug(f'Data loaded from {path}')
     return df
+
 
 def save_data(data: pd.DataFrame, data_path: str) -> None:
     """Save the train and test datasets."""

@@ -12,6 +12,7 @@ classifiers = [
 ]
 dependencies = [
   "boto3",
+  "dill",
   "Flask",
   "Flask_cors",
   "joblib",

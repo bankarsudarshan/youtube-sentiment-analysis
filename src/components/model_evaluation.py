@@ -1,8 +1,6 @@
 # src/model_evaluation.py
 import json
-import logging
 import os
-import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,30 +8,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix
 
-log_dir = "logs"
-os.makedirs(log_dir, exist_ok=True)
-
-logger = logging.getLogger("model_evaluation")
-logger.setLevel("DEBUG")
-fh = logging.FileHandler(os.path.join(log_dir, "model_evaluation.log"))
-ch = logging.StreamHandler()
-for h in (fh, ch):
-    h.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-    logger.addHandler(h)
-
-
-def load_pickle(path: str):
-    with open(path, "rb") as f:
-        obj = pickle.load(f)
-    logger.debug("Loaded object from %s", path)
-    return obj
-
-
-def load_test_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df.fillna("", inplace=True)
-    logger.debug("Test data loaded from %s with shape %s", path, df.shape)
-    return df
+from src.logger import logging as logger
 
 
 def evaluate_model(model, vectorizer, test_df: pd.DataFrame):
