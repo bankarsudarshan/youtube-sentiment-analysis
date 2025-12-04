@@ -1,14 +1,30 @@
 import lightgbm as lgb
-import numpy as np
+import mlflow
 
 from src.logger import logging
-from src.utils.main_utils import read_yaml_file, load_data, load_object, save_object
+from src.utils.main_utils import read_yaml_file, load_data, load_object, save_dict_as_json
 
 
-def train_lgbm(X_train: np.ndarray, y_train: np.ndarray, learning_rate: float, max_depth: int, n_estimators: int) -> lgb.LGBMClassifier:
-    """Train a LightGBM model."""
+def train_model():
     try:
-        best_model = lgb.LGBMClassifier(
+        params = read_yaml_file("params.yaml")
+        max_features = params["data_transformation"]["max_features"]
+        ngram_range = params["data_transformation"]["ngram_range"]
+        learning_rate = params["model_trainer"]["learning_rate"]
+        max_depth = params["model_trainer"]["max_depth"]
+        n_estimators = params["model_trainer"]["n_estimators"]
+
+        train_data = load_data("artifacts/data_preprocessing/train_processed.csv")
+
+        # load pre-processed data and vectorizer object
+        X_train, y_train = train_data["clean_comment"], train_data["category"]
+        vectorizer = load_object("artifacts/data_transformation/tfidf_vectorizer.pkl")
+
+        # text data transform
+        X_train_transformed = vectorizer.transform(X_train).tocsr()
+
+        # model
+        model = lgb.LGBMClassifier(
             objective='multiclass',
             num_class=3,
             metric="multi_logloss",
@@ -20,41 +36,33 @@ def train_lgbm(X_train: np.ndarray, y_train: np.ndarray, learning_rate: float, m
             max_depth=max_depth,
             n_estimators=n_estimators
         )
-        best_model.fit(X_train, y_train)
-        logging.debug('LightGBM model training completed')
-        return best_model
-    except Exception as e:
-        logging.error('Error during LightGBM model training: %s', e)
-        raise
 
-def main():
-    try:
+        # ------------------------Training and MLflow auto-logging------------------------
+        mlflow.set_tracking_uri("http://ec2-51-20-74-217.eu-north-1.compute.amazonaws.com:5000")
+        mlflow.set_experiment("Training Pipeline")
+        logging.debug("MLflow tracking URI and experiment is set")
 
-        params = read_yaml_file('params.yaml')
+        mlflow.lightgbm.autolog()
 
-        learning_rate = params['model_trainer']['learning_rate']
-        max_depth = params['model_trainer']['max_depth']
-        n_estimators = params['model_trainer']['n_estimators']
+        with mlflow.start_run() as run:
 
-        # Load the processed training data
-        train_data = load_data('artifacts/data_preprocessing/train_processed.csv')
-        X_train, y_train = train_data['clean_comment'], train_data['category']
+            # Log TF-IDF params manually
+            mlflow.log_param("vectorizer_max_features", max_features)
+            mlflow.log_param("vectorizer_ngram_range", ngram_range)
+            mlflow.log_param("vocab_size", len(vectorizer.vocabulary_))
 
-        vectorizer = load_object("artifacts/data_transformation/tfidf_vectorizer.pkl")
+            model.fit(X_train_transformed, y_train)
+            logging.info("LightGBM model training completed")
 
-        # transform (feature engineer) the processed training data
-        X_train_transformed = vectorizer.transform(X_train)
+            save_dict_as_json({"run_id": run.info.run_id}, 'artifacts/model_trainer/output.json')
 
-        # Train the LightGBM model using hyperparameters from params.yaml
-        best_model = train_lgbm(X_train_transformed, y_train, learning_rate, max_depth, n_estimators)
-
-        # Save the trained model in the root directory
-        save_object('artifacts/model_trainer/lgbm_model.pkl', best_model)
+            logging.info(f"MLflow run completed: {run.info.run_id}")
+        # ------------------------Training and MLflow auto-logging------------------------
 
     except Exception as e:
-        logging.error(f'Failed to complete the feature engineering and model building process: {e}')
+        logging.error(f"Failed to complete model training: {e}")
         print(f"Error: {e}")
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    train_model()

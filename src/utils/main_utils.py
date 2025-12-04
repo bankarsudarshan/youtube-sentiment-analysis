@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -105,3 +106,16 @@ def save_data(data: pd.DataFrame, data_path: str) -> None:
     except Exception as e:
         logging.error('Unexpected error occurred while saving the data: %s', e)
         raise e
+    
+def save_dict_as_json(dictionary: dict, file_path: str):
+    """
+    Saves a dictionary to a specified JSON file with pretty formatting.
+    Automatically creates directories if needed.
+    """
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w") as f:
+            json.dump(dictionary, f, indent=4, default=str)
+        logging.info(f'Dictionary saved at {file_path}')
+    except Exception as e:
+        raise Exception(f"Error saving dictionary to JSON: {e}")
