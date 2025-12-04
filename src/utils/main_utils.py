@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import dill
 import yaml
-from pandas import DataFrame
+import pandas as pd
 
 from src.exception import MyException
 from src.logger import logging
@@ -84,3 +84,22 @@ def save_object(file_path: str, obj: object) -> None:
 
     except Exception as e:
         raise MyException(e, sys) from e
+
+def load_data(path: str) -> pd.DataFrame:
+    """Load data from a CSV file."""
+    df = pd.read_csv(path)
+    df.fillna("", inplace=True)
+    logging.debug(f'Data loaded from {path}')
+    return df
+
+def save_train_test_data(train_data: pd.DataFrame, test_data: pd.DataFrame, data_path: str) -> None:
+    """Save the train and test datasets."""
+    try:
+        raw_data_path = os.path.join(data_path, 'raw')
+        os.makedirs(raw_data_path, exist_ok=True)
+        train_data.to_csv(os.path.join(raw_data_path, "train.csv"), index=False)
+        test_data.to_csv(os.path.join(raw_data_path, "test.csv"), index=False)
+        logging.debug('Train and test data saved to %s', raw_data_path)
+    except Exception as e:
+        logging.error('Unexpected error occurred while saving the data: %s', e)
+        raise
