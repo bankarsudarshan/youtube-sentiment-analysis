@@ -1,0 +1,37 @@
+[project]
+name = "src"
+version = "0.0.1"
+description = "a package containing pipeline components for youtube comments sentiment analysis mlops project"
+authors = [
+  { name="Sudarshan Bankar", email="sudarshanbankar22@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "boto3",
+  "Flask",
+  "Flask_cors",
+  "joblib",
+  "lightgbm",
+  "matplotlib",
+  "mlflow",
+  "dvc",
+  "dvc[s3]",
+  "nltk",
+  "numpy",
+  "pandas",
+  "wordcloud",
+  "seaborn"
+]
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "src/**",
+]
