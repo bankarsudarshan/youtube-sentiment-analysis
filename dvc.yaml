@@ -6,15 +6,20 @@ stages:
     params:
       - data_ingestion.test_size
     outs:
-      - data/raw
+      - artifacts/data_ingestion/feature_store/raw_original.csv
+      - artifacts/data_ingestion/ingested/train.csv
+      - artifacts/data_ingestion/ingested/test.csv
+
   data_preprocessing:
     cmd: python src/data_preprocessing.py
     deps:
       - src/data_preprocessing.py
-      - data/raw/
+      - artifacts/data_ingestion/ingested/train.csv
+      - artifacts/data_ingestion/ingested/test.csv
     outs:
-      - data/processed/train_processed.csv
-      - data/processed/test_processed.csv
+      - artifacts/artifacts/data_preprocessing//train_processed.csv
+      - artifacts/artifacts/data_preprocessing//test_processed.csv
+      
   model_building:
     cmd: python src/model_building.py
     deps:
