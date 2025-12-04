@@ -1,6 +1,5 @@
 mlruns
-data
-logs
+artifacts
 models
 reports
 

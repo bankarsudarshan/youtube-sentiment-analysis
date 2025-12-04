@@ -6,7 +6,6 @@ import dill
 import yaml
 import pandas as pd
 
-from src.exception import MyException
 from src.logger import logging
 
 
@@ -16,7 +15,7 @@ def read_yaml_file(file_path: str) -> dict:
             return yaml.safe_load(yaml_file)
 
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 
 def write_yaml_file(file_path: str, content: object, replace: bool = False) -> None:
@@ -28,7 +27,7 @@ def write_yaml_file(file_path: str, content: object, replace: bool = False) -> N
         with open(file_path, "w") as file:
             yaml.dump(content, file)
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 
 def load_object(file_path: str) -> object:
@@ -42,7 +41,7 @@ def load_object(file_path: str) -> object:
             obj = dill.load(file_obj)
         return obj
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 def save_numpy_array_data(file_path: str, array: np.array):
     """
@@ -56,7 +55,7 @@ def save_numpy_array_data(file_path: str, array: np.array):
         with open(file_path, 'wb') as file_obj:
             np.save(file_obj, array)
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 
 def load_numpy_array_data(file_path: str) -> np.array:
@@ -69,7 +68,7 @@ def load_numpy_array_data(file_path: str) -> np.array:
         with open(file_path, 'rb') as file_obj:
             return np.load(file_obj)
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 
 def save_object(file_path: str, obj: object) -> None:
@@ -83,7 +82,7 @@ def save_object(file_path: str, obj: object) -> None:
         logging.info("Exited the save_object method of utils")
 
     except Exception as e:
-        raise MyException(e, sys) from e
+        raise e
 
 def load_data(path: str) -> pd.DataFrame:
     """Load data from a CSV file."""
@@ -92,14 +91,13 @@ def load_data(path: str) -> pd.DataFrame:
     logging.debug(f'Data loaded from {path}')
     return df
 
-def save_train_test_data(train_data: pd.DataFrame, test_data: pd.DataFrame, data_path: str) -> None:
+def save_data(data: pd.DataFrame, data_path: str) -> None:
     """Save the train and test datasets."""
     try:
-        raw_data_path = os.path.join(data_path, 'raw')
-        os.makedirs(raw_data_path, exist_ok=True)
-        train_data.to_csv(os.path.join(raw_data_path, "train.csv"), index=False)
-        test_data.to_csv(os.path.join(raw_data_path, "test.csv"), index=False)
-        logging.debug('Train and test data saved to %s', raw_data_path)
+        dir_path = os.path.dirname(data_path)
+        os.makedirs(dir_path, exist_ok=True)
+        data.to_csv(os.path.join(data_path), index=False)
+        logging.debug(f'data saved to {data_path}')
     except Exception as e:
         logging.error('Unexpected error occurred while saving the data: %s', e)
-        raise
+        raise e
