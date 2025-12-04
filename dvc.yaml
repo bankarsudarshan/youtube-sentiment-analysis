@@ -1,6 +1,6 @@
 stages:
   data_ingestion:
-    cmd: python src.components.data_ingestion
+    cmd: python -m src.components.data_ingestion
     deps:
       - src/components/data_ingestion.py
     params:
@@ -11,7 +11,7 @@ stages:
       - artifacts/data_ingestion/ingested/test.csv
 
   data_preprocessing:
-    cmd: python src.components.data_preprocessing
+    cmd: python -m src.components.data_preprocessing
     deps:
       - src/components/data_ingestion.py
       - src/components/data_preprocessing.py
@@ -22,7 +22,7 @@ stages:
       - artifacts/data_preprocessing/test_processed.csv
 
   data_transformation:
-    cmd: python src.components.data_transformation
+    cmd: python -m src.components.data_transformation
     deps:
       - src/components/data_ingestion.py
       - src/components/data_preprocessing.py
@@ -35,26 +35,15 @@ stages:
       - artifacts/data_transformation/tfidf_vectorizer.pkl
 
   model_trainer:
-    cmd: python src/model_trainer.py
+    cmd: python -m src.components.model_trainer
     deps:
       - src/components/data_ingestion.py
       - src/components/data_preprocessing.py
       - src/components/data_transformation.py
       - artifacts/data_transformation/tfidf_vectorizer.pkl
     params:
-      - model_building.learning_rate
-      - model_building.max_depth
-      - model_building.n_estimators
+      - model_trainer.learning_rate
+      - model_trainer.max_depth
+      - model_trainer.n_estimators
     outs:
       - artifacts/model_trainer/lgbm_model.pkl
-  
-  model_evaluation:
-    cmd: python src/model_evaluation.py
-    deps:
-      - src/model_evaluation.py
-      - models/lgbm_model.pkl
-      - models/tfidf_vectorizer.pkl
-      - data/processed/test_processed.csv
-    outs:
-      - reports/confusion_matrix.png
-      - reports/metrics.json
