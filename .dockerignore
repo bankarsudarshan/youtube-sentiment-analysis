@@ -1,0 +1,12 @@
+.git
+.github
+.gitignore
+.venv
+__pycache__
+*.pyc
+logs
+LICENSE
+notebooks
+.dvc/cache/
+.dvc/tmp/
+*.dvc
