@@ -14,9 +14,8 @@ def train_model():
         max_depth = params["model_trainer"]["max_depth"]
         n_estimators = params["model_trainer"]["n_estimators"]
 
-        train_data = load_data("artifacts/data_preprocessing/train_processed.csv")
-
         # load pre-processed data and vectorizer object
+        train_data = load_data("artifacts/data_preprocessing/train_processed.csv")
         X_train, y_train = train_data["clean_comment"], train_data["category"]
         vectorizer = load_object("artifacts/data_transformation/tfidf_vectorizer.pkl")
 
@@ -54,11 +53,11 @@ def train_model():
             model.fit(X_train_transformed, y_train)
             logging.info("LightGBM model training completed")
 
-            save_dict_as_json({"run_id": run.info.run_id}, 'artifacts/model_trainer/output.json')
+            save_dict_as_json({"run_id": run.info.run_id}, 'artifacts/model_trainer/trainer_output.json')
 
             logging.info(f"MLflow run completed: {run.info.run_id}")
         # ------------------------Training and MLflow auto-logging------------------------
-
+    
     except Exception as e:
         logging.error(f"Failed to complete model training: {e}")
         print(f"Error: {e}")

@@ -103,52 +103,40 @@ stages:
       md5: 56c2590ada06e4aa5b9b464d4b3abba3
       size: 36852
   model_evaluation:
-    cmd: python src/model_evaluation.py
-    deps:
-    - path: data/processed/test_processed.csv
-      hash: md5
-      md5: 1f67ea5d63d05253676fbb5ff9a84f98
-      size: 1501948
-    - path: models/lgbm_model.pkl
-      hash: md5
-      md5: 4f41e9d0155048a626d5726615f8b7e3
-      size: 3902965
-    - path: models/tfidf_vectorizer.pkl
-      hash: md5
-      md5: 56c2590ada06e4aa5b9b464d4b3abba3
-      size: 36852
-    - path: src/model_evaluation.py
-      hash: md5
-      md5: d5fab3c32b8c1f3618bc1bd9127e9eee
-      size: 3523
-    outs:
-    - path: reports/confusion_matrix.png
-      hash: md5
-      md5: f873258602b1c0a213d8725915676869
-      size: 23478
-    - path: reports/metrics.json
-      hash: md5
-      md5: d31045b5ab488795aab1587169c3d378
-      size: 875
-  data_transformation:
-    cmd: python -m src.components.data_transformation
+    cmd: python -m src.components.model_evaluation
     deps:
     - path: artifacts/data_preprocessing/test_processed.csv
       hash: md5
       md5: bd526278502d29ac775eb65b286a3ba1
       size: 5098053
+    - path: artifacts/data_transformation/tfidf_vectorizer.pkl
+      hash: md5
+      md5: 7a3a9dd9edd8a844607870660f86f800
+      size: 36884
+    - path: artifacts/model_trainer/output.json
+      hash: md5
+      md5: 35a46a02b0e010b8fdb803fc2fd070dd
+      size: 52
+    - path: src/components/model_evaluation.py
+      hash: md5
+      md5: fa10ee75b8fa24540d39a2349747757a
+      size: 5673
+    outs:
+    - path: artifacts/model_evaluation/evaluation_result.json
+      hash: md5
+      md5: e341f0a67c63bd378b61ba777565368f
+      size: 171
+  data_transformation:
+    cmd: python -m src.components.data_transformation
+    deps:
     - path: artifacts/data_preprocessing/train_processed.csv
       hash: md5
       md5: 0df0bf25d2563d81c2fe136c55687a52
       size: 3596107
-    - path: src/components/data_ingestion.py
+    - path: src/components/data_transformation.py
       hash: md5
-      md5: c6b15122dc32853a478ca2840222301d
-      size: 1730
-    - path: src/components/data_preprocessing.py
-      hash: md5
-      md5: 5e2fcb5d16db9fc411f9cc84aaf8e457
-      size: 2429
+      md5: 9094e83c30aaf51a665355103e52c4ed
+      size: 1535
     params:
       params.yaml:
         data_transformation.max_features: 1000
@@ -163,29 +151,36 @@ stages:
   model_trainer:
     cmd: python -m src.components.model_trainer
     deps:
+    - path: artifacts/data_preprocessing/train_processed.csv
+      hash: md5
+      md5: 0df0bf25d2563d81c2fe136c55687a52
+      size: 3596107
     - path: artifacts/data_transformation/tfidf_vectorizer.pkl
       hash: md5
       md5: 7a3a9dd9edd8a844607870660f86f800
       size: 36884
-    - path: src/components/data_ingestion.py
+    - path: src/components/model_trainer.py
       hash: md5
-      md5: c6b15122dc32853a478ca2840222301d
-      size: 1730
-    - path: src/components/data_preprocessing.py
-      hash: md5
-      md5: 5e2fcb5d16db9fc411f9cc84aaf8e457
-      size: 2429
-    - path: src/components/data_transformation.py
-      hash: md5
-      md5: 9094e83c30aaf51a665355103e52c4ed
-      size: 1535
+      md5: def0c68951fc93fe6d7af1caf4c5f72e
+      size: 2591
     params:
       params.yaml:
         model_trainer.learning_rate: 0.05
         model_trainer.max_depth: 20
         model_trainer.n_estimators: 367
     outs:
-    - path: artifacts/model_trainer/lgbm_model.pkl
+    - path: artifacts/model_trainer/trainer_output.json
       hash: md5
-      md5: 27c31bb21cc07c728d7a33f91c15685f
-      size: 3902829
+      md5: 0a112c30984600493c452a1e6b7614b6
+      size: 52
+  model_pusher:
+    cmd: python -m src.components.model_pusher
+    deps:
+    - path: artifacts/model_evaluation/evaluation_result.json
+      hash: md5
+      md5: e341f0a67c63bd378b61ba777565368f
+      size: 171
+    - path: src/components/model_pusher.py
+      hash: md5
+      md5: 2f848c991016263b77160d1b88ea86b2
+      size: 1775

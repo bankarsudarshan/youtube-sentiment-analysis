@@ -13,7 +13,6 @@ stages:
   data_preprocessing:
     cmd: python -m src.components.data_preprocessing
     deps:
-      - src/components/data_ingestion.py
       - src/components/data_preprocessing.py
       - artifacts/data_ingestion/ingested/train.csv
       - artifacts/data_ingestion/ingested/test.csv
@@ -24,10 +23,8 @@ stages:
   data_transformation:
     cmd: python -m src.components.data_transformation
     deps:
-      - src/components/data_ingestion.py
-      - src/components/data_preprocessing.py
+      - src/components/data_transformation.py
       - artifacts/data_preprocessing/train_processed.csv
-      - artifacts/data_preprocessing/test_processed.csv
     params:
       - data_transformation.ngram_range
       - data_transformation.max_features
@@ -37,13 +34,28 @@ stages:
   model_trainer:
     cmd: python -m src.components.model_trainer
     deps:
-      - src/components/data_ingestion.py
-      - src/components/data_preprocessing.py
-      - src/components/data_transformation.py
+      - src/components/model_trainer.py
+      - artifacts/data_preprocessing/train_processed.csv
       - artifacts/data_transformation/tfidf_vectorizer.pkl
     params:
       - model_trainer.learning_rate
       - model_trainer.max_depth
       - model_trainer.n_estimators
     outs:
-      - artifacts/model_trainer/lgbm_model.pkl
+      - artifacts/model_trainer/trainer_output.json
+
+  model_evaluation:
+    cmd: python -m src.components.model_evaluation
+    deps:
+      - src/components/model_evaluation.py
+      - artifacts/data_preprocessing/test_processed.csv
+      - artifacts/data_transformation/tfidf_vectorizer.pkl
+      - artifacts/model_trainer/output.json
+    outs:
+      - artifacts/model_evaluation/evaluation_result.json
+
+  model_pusher:
+    cmd: python -m src.components.model_pusher
+    deps:
+      - src/components/model_pusher.py
+      - artifacts/model_evaluation/evaluation_result.json
