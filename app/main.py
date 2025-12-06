@@ -1,4 +1,5 @@
 import io
+import os
 import matplotlib
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -29,6 +30,19 @@ def load_model_and_vectorizer(model_name, model_version, vectorizer_path):
     vectorizer = load_object(vectorizer_path)
     return model, vectorizer
 
+print("\n--- DEBUGGING PATHS ---")
+print(f"Current Working Directory: {os.getcwd()}")
+print(f"Files in Current Directory: {os.listdir(os.getcwd())}")
+
+if os.path.exists("artifacts"):
+    print(f"✅ 'artifacts' folder exists. Contents: {os.listdir('artifacts')}")
+    if os.path.exists("artifacts/data_transformation"):
+        print(f"✅ 'data_transformation' exists. Contents: {os.listdir('artifacts/data_transformation')}")
+    else:
+        print("❌ 'artifacts/data_transformation' folder NOT found.")
+else:
+    print("❌ 'artifacts' folder NOT found.")
+print("--- END DEBUGGING ---\n")
 
 # Initialize the model and vectorizer
 model, vectorizer = load_model_and_vectorizer("YoutubeSentimentAnalysis", "1", "artifacts/data_transformation/tfidf_vectorizer.pkl") 
